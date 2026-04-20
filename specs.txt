@@ -1,0 +1,15 @@
+i am working on a small verifiable rag project, experimental and educational for myself.
+i have chosen corbt/all-recipes from huggingface as the dataset.
+the dataset's existing per-recipe separation is good enough for chunking in this project.
+i am still working separately on selecting models and vectorizer, but i need a frontend too.
+i feel streamlit is a good choice. i have heard of it before but dont want the complicated containerization as what ive seen.
+i hoping a simple pyhon file will be there. (just for the frontend. id imageine there will be more files later on models, vectorization, etc.)
+I wont be containerizing anything at all. simple structure, so only take what is useful from example.
+
+Note - 
+i want to discourage your habit of putting transient comments
+"# i changed this per your revised instruction look at me here" or "# this is for you" or "# i added this for you" etc.
+i want you to write the code not as if you are writing it for someone else.
+i wont be looking carefully deep into the code but i still expect good engineering practice.
+there are some notes
+If there are things that i should replace, "# put actual test data here", etc. hint to me in your response, not in your code edits with a small comment - i will miss it and you will fail.
