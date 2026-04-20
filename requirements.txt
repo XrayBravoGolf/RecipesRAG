@@ -1,0 +1,11 @@
+accelerate
+datasets
+faiss-cpu
+numpy
+pandas
+pyarrow
+sentence-transformers
+streamlit
+torch
+tqdm
+transformers

@@ -1,6 +1,10 @@
 i am working on a small verifiable rag project, experimental and educational for myself.
 i have chosen corbt/all-recipes from huggingface as the dataset.
 the dataset's existing per-recipe separation is good enough for chunking in this project.
+BAAI/bge-small-en-v1.5 for embedding
+top k result should carry parquet_filename, row_in_file, global_row_id, and recipe_text.
+UI should allow downloading csv file containing these results.
+
 i am still working separately on selecting models and vectorizer, but i need a frontend too.
 i feel streamlit is a good choice. i have heard of it before but dont want the complicated containerization as what ive seen.
 i hoping a simple pyhon file will be there. (just for the frontend. id imageine there will be more files later on models, vectorization, etc.)

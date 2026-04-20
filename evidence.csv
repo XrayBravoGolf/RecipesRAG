@@ -1,0 +1,55 @@
+global_row_id,parquet_filename,row_in_file,recipe_text,score
+9174,train-00000-of-00004-237b1b1141fdcfa1.parquet,9174,"Cream Of Mushroom Soup
+
+Ingredients:
+- 2 (8 oz.) cans mushrooms, drained and minced
+- 1 (15 oz.) can chicken broth
+- 3 c. milk
+- 1 1/2 Tbsp. minced onion
+- 1 tsp. salt
+- dash of pepper
+- 3 Tbsp. flour
+- 2 Tbsp. butter
+
+Directions:
+- Saute mushrooms in 1 tablespoon butter.
+- Melt the other tablespoon butter in saucepan.
+- Add flour and stir until smooth. Add seasonings.
+- Slowly add milk, stirring constantly.
+- Add minced onion.
+- Add chicken broth and mushrooms.
+- Continue to stir until mixture reaches boiling point but do not boil.
+- Serves 6.",0.7699306607246399
+5619,train-00000-of-00004-237b1b1141fdcfa1.parquet,5619,"Broccoli Soup
+
+Ingredients:
+- 1 c. chopped broccoli
+- 1/2 can mushroom soup
+- 1 c. chicken broth
+- 1 c. milk
+- 2 or 3 green onions
+- 3 oz. cheese, grated
+- 2 Tbsp. flour
+- salt and pepper to taste
+- 1/2 Tbsp. butter
+
+Directions:
+- Cook broccoli in chicken broth for about 5 minutes.
+- Saute onions in butter.
+- Mix flour in milk.
+- Mix all ingredients except cheese.
+- Stir over medium heat until smooth.
+- Add cheese; when melted, serve.",0.7507798671722412
+9429,train-00000-of-00004-237b1b1141fdcfa1.parquet,9429,"Corn Vegetable Medley
+
+Ingredients:
+- 1 (10 3/4 oz.) can Campbell's condensed golden corn soup
+- 1/2 c. milk
+- 2 c. broccoli flowerets
+- 1 c. sliced carrots
+- 1 c. cauliflowerets
+- 1/2 c. shredded Cheddar cheese (2 oz., optional)
+
+Directions:
+- In 2-quart saucepan over medium heat, heat soup and milk to boiling.
+- Stir in vegetables.",0.744409441947937
