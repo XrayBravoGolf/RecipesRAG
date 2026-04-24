@@ -9,13 +9,13 @@ Retrieval-Augmented Generation (RAG) reduces Large Language Model (LLM) hallucin
 ## Approach & Implementation
 
 ### 1. Data Processing & Storage
-This project utilizes the [`corbt/all-recipes`](https://huggingface.co/datasets/corbt/all-recipes) dataset from HuggingFace, which consists of 2,147,248 examples in its training split, stored in Parquet format with a single text string per recipe. Because each row contains a complete set of ingredients and instructions, we are able to skip traditional chunking algorithms or sliding window overlaps, using the per-recipe separation as our document unit. 
+This project utilizes the [`corbt/all-recipes`](https://huggingface.co/datasets/corbt/all-recipes) dataset from HuggingFace, which consists of 2,147,248 examples in its training split, stored in Parquet format with a single text string per recipe. Because each row contains a complete set of ingredients and instructions, we do not use traditional chunking algorithms or sliding window overlaps, using the per-recipe separation as our document unit. 
 
 For similarity search, we use a local FAISS vector database configured with `IndexFlatIP` and wrapped in `IndexIDMap2` to map embeddings to global IDs. To maintain verifiability without significantly increasing the size of the vector index, the raw `recipe_text` and exact file coordinates (`parquet_filename`, `row_in_file`, and `global_row_id`) are stored in an accompanying SQLite relational database (`metadata.sqlite`).
 
 ### 2. Embedding & Retrieval
 #### Embedding
-We use the `BAAI/bge-small-en-v1.5` pre-trained embedding model without any additional training or fine-tuning. It was chosen for its performance-to-size ratio on retrieval benchmarks and its 384-dimensional output, which helps keep the 2-million-row vector index manageable in memory. To handle the scale of the dataset during index generation, the system streams records directly from Parquet block groups for batch processing using an insert batch size of 1024 and an encode layout size of 512. The embedding build process was executed on an NVIDIA RTX 3080 Ti GPU, fully utilizing its 12GB of VRAM to complete the operation in approximately 40 minutes.
+We use the `BAAI/bge-small-en-v1.5` pre-trained embedding model without any additional training or fine-tuning. It was chosen for its performance-to-size ratio on retrieval benchmarks and its 384-dimensional output, which helps keep the 2-million-row vector index manageable in memory. To handle the scale of the dataset during index generation, the system streams records directly from Parquet block groups for batch processing using an insert batch size of 1024 and an encode layout size of 512. The embedding build process was executed on an NVIDIA RTX 3080 Ti GPU, utilizing its 12GB of VRAM to complete the operation in approximately 40 minutes.
 To maintain verifiable source tracking, each FAISS vector insertion is simultaneously paired with an SQLite record containing the corresponding `global_row_id`, `parquet_filename`, `row_in_file`, and `recipe_text`.
 
 #### VERIFIABLE Retrieval through Metadata Database
@@ -28,7 +28,7 @@ A common challenge in RAG systems is preventing the model from relying on its pr
 
 > *"You are a helpful culinary assistant. Use ONLY the provided recipes to answer the user's question. If a recipe contains the answer, show the recipe in a way that both answers user's question and illustrates the cooking. If the recipes do not contain the answer, say 'I cannot answer this based on the provided recipes.' However, in this case include one recipe in your answer and indicate it is the closest match based on the question. Do not use outside knowledge. However, if the user asks for substitutions or modifications, provide reasonable suggestions based on the ingredients in the recipes."*
 
-This prompt provides guidelines for utilizing the provided recipes versus suggesting ingredient substitutions. To support this behavior, the model's generation temperature is set to 0.3 with sampling enabled. This configuration restricts output variance. The system provides the model with up to 5 retrieved recipes by default (`Top-k` = 5) to balance context size against noise. Finally, the maximum sequence length for new tokens is set to 1400 to provide sufficient tokens to output instructions and make sure a user finishes their culinary answer.
+This prompt provides guidelines for utilizing the provided recipes versus suggesting ingredient substitutions. To support this behavior, the model's generation temperature is set to 0.3 with sampling enabled. This configuration restricts output variance. The system provides the model with up to 5 retrieved recipes by default (`Top-k` = 5) to balance context size against noise. Finally, the maximum sequence length for new tokens is set to 1400 to provide sufficient tokens to output instructions and ingredient lists without truncation.
 
 
 ### 4. Serving & UI
