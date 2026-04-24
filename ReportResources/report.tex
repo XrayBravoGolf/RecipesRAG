@@ -1,0 +1,66 @@
+\documentclass[paper=a4, fontsize=11pt]{scrartcl} % A4 paper and 11pt font size
+
+\newcommand{\assignment}{Project Report}
+\input{include/hw-template.tex}
+
+% Redefine title to remove the duedate line and include the actual project title
+\title{	
+\normalfont \normalsize
+\textsc{Northeastern University,  Khoury College of Computer Science} \\ [25pt]
+\horrule{0.5pt} \\[0.4cm]
+\huge CS 6120  Natural Language Processing \\ \assignment \\ [15pt]
+\Large \textbf{What do we do with all these food in fridge?}
+\horrule{2pt} \\[0.5cm]
+}
+
+\author{
+    \textbf{Xiaoyao Xu} \\ 
+    \href{mailto:xu.x1@northeastern.edu}{xu.x1@northeastern.edu} \\
+    \href{https://github.com/XrayBravoGolf/RecipesRAG}{GitHub: XrayBravoGolf/RecipesRAG}
+}% INFORMATION
+
+\begin{document}
+
+\maketitle % Print the title
+
+\section{Purpose}
+This project aims to build an experimental, verifiable Retrieval-Augmented Generation (RAG) culinary assistant that helps users utilize their available ingredients by recommending recipes and providing traceable source evidence.
+
+\section{Background}
+Retrieval-Augmented Generation (RAG) reduces Large Language Model (LLM) hallucinations by providing external context, but trusting the output remains challenging when specific constraints matter. "Verifiable RAG" solves this by tightly coupling generated text with exact source citations, allowing users to trace claims. In the culinary domain, combining vector similarity search with a generative assistant offers a transparent way to suggest recipes and ingredient substitutions while citing exact sources.
+
+\section{Approach \& Implementation}
+
+\subsection{Data Processing \& Storage}
+This project utilizes the \href{https://huggingface.co/datasets/corbt/all-recipes}{\texttt{corbt/all-recipes}} dataset from HuggingFace, which consists of 2,147,248 examples in its training split, stored in Parquet format with a single text string per recipe. Because each row naturally encapsulates a complete set of ingredients and instructions, we bypass traditional chunking algorithms and sliding window overlaps entirely, using the natural per-recipe separation as our document unit. 
+
+For fast similarity search, we use a local FAISS vector database configured with \texttt{IndexFlatIP} and wrapped in \texttt{IndexIDMap2} to map embeddings to global IDs. To maintain strict verifiability without bloating the vector index, the raw \texttt{recipe\_text} and exact file coordinates (\texttt{parquet\_filename}, \texttt{row\_in\_file}, and \texttt{global\_row\_id}) are stored in an accompanying SQLite relational database (\texttt{metadata.sqlite}).
+
+\subsection{Embedding \& Retrieval}
+\subsubsection*{Embedding}
+We use the \texttt{BAAI/bge-small-en-v1.5} pre-trained embedding model without any additional training or fine-tuning, strategically chosen for its excellent performance-to-size ratio on retrieval benchmarks and its compact 384-dimensional output, which is crucial for keeping the massive 2-million-row vector index manageable in memory. To manage the massive scale of the dataset during index generation, the system streams records directly from Parquet block groups for batch processing using an insert batch size of 1024 and an encode layout size of 512. The embedding build process was executed on an NVIDIA RTX 3080 Ti GPU, which fully utilized all 12GB of its available VRAM to complete the entire operation in approximately 40 minutes.
+To maintain verifiable source tracking, each FAISS vector insertion is simultaneously paired with an SQLite record containing the corresponding \texttt{global\_row\_id}, \texttt{parquet\_filename}, \texttt{row\_in\_file}, and \texttt{recipe\_text}.
+
+\subsubsection*{VERIFIABLE Retrieval through Metadata Database}
+The retrieval pipeline executes a dense vector similarity search using inner product distances within the FAISS index to find the most relevant embeddings. Because FAISS only stores numerical vectors and their corresponding IDs efficiently, we rely on a separate local SQLite metadata database to maintain verifiable evidence and human-readable context. When a user sends a query, FAISS quickly returns the \texttt{global\_row\_id} and distance score for the top-k matches. These IDs are immediately passed to the SQLite database to fetch the exact \texttt{recipe\_text} and source tracking coordinates (\texttt{parquet\_filename} and \texttt{row\_in\_file}). This two-step retrieval architecture keeps the vector index lean while providing full, verifiable source tracing.
+
+\subsection{Generation Engine \& Remediation}
+The generation step uses the \texttt{Qwen/Qwen2.5-3B-Instruct} language model. To run this locally on a single GPU node and avoid the overhead of a distributed computation cluster, the model weights are loaded in half-precision \texttt{bfloat16}. Before generation, the retrieved recipes from the FAISS step are aggregated and formatted into a structured context block. The model then processes this context alongside the user's query using its conversational chat template.
+
+A common challenge in RAG systems is preventing the model from relying on its pre-trained internal knowledge when the retrieved context is insufficient. To address this, the system prompt establishes rules for grounding the response:
+
+\begin{quote}
+\textit{"You are a helpful culinary assistant. Use ONLY the provided recipes to answer the user's question. If a recipe contains the answer, show the recipe in a way that both answers user's question and illustrates the cooking. If the recipes do not contain the answer, say 'I cannot answer this based on the provided recipes.' However, in this case include one recipe in your answer and indicate it is the closest match based on the question. Do not use outside knowledge. However, if the user asks for substitutions or modifications, provide reasonable suggestions based on the ingredients in the recipes."}
+\end{quote}
+
+This prompt explicitly defines the boundary between utilizing the provided recipes and suggesting ingredient substitutions. To support this behavior mechanically, the model's generation temperature is set to 0.3 with sampling enabled. This configuration restricts output variance, favoring factual synthesis over creativity. The system provides the model with up to 5 retrieved recipes by default (\texttt{Top-k} = 5) to balance context size against potential noise. Finally, the maximum sequence length for new tokens is set to 1400, allowing the model enough room to output complete instructions and ingredient lists without mid-sentence truncation.
+
+\subsection{Serving \& UI}
+The application is served using a Streamlit frontend (\texttt{frontend.py}), which has been introduced to project participants and users, and is exceptionally easy to configure and rapid to iterate on. Running directly on the Northeastern HPC cluster through interactive GPU sessions, we opted for a straightforward monolithic script architecture, entirely bypassing complex containerization or orchestration layers. 
+To bring the concept of "verifiable RAG" directly to the end user, the interface features a dedicated expander that displays the raw source text, retrieval scores, and exact database coordinates (global IDs) for each recipe. Furthermore, users can download this retrieved evidence as a CSV file to independently verify the LLM's grounding.
+During the evaluation session, one NVIDIA V100 GPU was allocated for the entire application, which comfortably handled both the retrieval and generation workloads while maintaining responsive UI interactions.
+
+\subsection{Validation \& Evaluation}
+Results are validated primarily through manual inspection by author and classroom peers, where the LLM's generated culinary suggestions are directly compared against the transparent source recipes surfaced in the user interface. For a more structured evaluation, the system allows for cross-referencing through the downloadable CSV evidence exports. This ensures that the language model accurately synthesized the retrieved instructions and respected ingredient constraints without hallucinating ungrounded steps or inventing non-existent ingredients.
+
+\end{document}
