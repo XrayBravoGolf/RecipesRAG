@@ -1,0 +1,2 @@
+artifacts/index/metadata.sqlite filter=lfs diff=lfs merge=lfs -text
+artifacts/index/recipes.faiss filter=lfs diff=lfs merge=lfs -text
