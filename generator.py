@@ -51,7 +51,7 @@ class RecipeGenerator:
         # 3. Generate the answer
         outputs = self.model.generate(
             **encoded_inputs,
-            max_new_tokens=400,
+            max_new_tokens=1400,
             temperature=0.3, # Low temp for factual answers
             do_sample=True,
             pad_token_id=self.tokenizer.eos_token_id

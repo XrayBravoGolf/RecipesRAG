@@ -27,7 +27,7 @@ def initialize_state(force_clear: bool = False) -> None:
 def render_sidebar() -> dict:
     with st.sidebar:
         st.header("Settings")
-        top_k = st.slider("Top-K", min_value=1, max_value=10, value=3)
+        top_k = st.slider("Top-K", min_value=1, max_value=10, value=5)
         show_context = st.toggle("Show retrieved context", value=True)
         st.divider()
         clear = st.button("Clear chat history", use_container_width=True)
